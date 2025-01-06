@@ -1,5 +1,4 @@
-﻿using BarCalculator;
-using System;
+﻿using System;
 using System.IO;
 
 namespace BarCalculator
@@ -8,20 +7,20 @@ namespace BarCalculator
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Введите имя");
+            Console.WriteLine("Введите имя пользователя:");
             string usrname = Console.ReadLine();
 
             Console.WriteLine("Введите дату:");
             string dat = Console.ReadLine();
 
-            Console.WriteLine("Введите путь к данным:");
+            Console.WriteLine("Введите путь к данным (например, C:\\Users\\ВашПользователь\\Documents):");
             string usrdat = Console.ReadLine();
 
-            Console.WriteLine("Введите имя файла:");
+            Console.WriteLine("Введите имя файла (например, data.txt):");
             string usrflname = Console.ReadLine();
-
-            User user = new User(usrname, dat, usrdat, usrflname);
-
+            Console.WriteLine("Введите имя заведения:");
+            string barname = Console.ReadLine();
+            User user = new User(usrname, dat, usrdat, usrflname, barname);
         }
     }
 
@@ -31,33 +30,40 @@ namespace BarCalculator
         public string Data { get; }
         public string UserDataPath { get; }
         public string UserFilename { get; }
-
-        public User(string username, string data, string userDataPath, string userFilename)
+        public string UserBarName { get; }
+        public User(string username, string data, string userDataPath, string userFilename, string userBarName)
         {
             Username = username;
             Data = data;
             UserDataPath = userDataPath;
             UserFilename = userFilename;
-            FileInfo fileInfo = new FileInfo(UserFilename);
-            if (fileInfo.Exists)
+            UserBarName = userBarName;
+
+            // Формируем полный путь к файлу
+            string fullFilePath = Path.Combine(UserDataPath, UserFilename);
+
+            try
             {
-                Console.WriteLine("Файл уже существует, пересоздаю его....");
-                fileInfo.Delete();
-                File.Create($"{UserFilename}");
-                Console.WriteLine("Готово");
+                FileInfo fileInfo = new FileInfo(fullFilePath);
+
+                // Проверяем, существует ли файл
+                if (fileInfo.Exists)
+                {
+                    Console.WriteLine("Файл уже существует. Пересоздаю его...");
+                    fileInfo.Delete(); // Удаляем старый файл
+                }
+
+                // Создаем новый файл
+                using (FileStream fs = File.Create(fullFilePath))
+                {
+                    Console.WriteLine($"Файл успешно создан по пути: {fullFilePath}");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                File.Create($"{UserFilename}");
-                Console.WriteLine("Файл создан");
+                Console.WriteLine($"Ошибка при создании файла: {ex.Message}");
             }
+            File.WriteAllTextAsync(fullFilePath, UserBarName);
         }
     }
-} 
-
-
-
-//Планы на 6 января
-// надо сделать так чтобы создавался файл в указанный путь
-// надо сделать метод для бара и записывать масиив
-//дедлайн 9 января
+}
