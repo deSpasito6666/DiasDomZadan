@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Xml;
 
 namespace BarCalculator
 {
@@ -20,8 +20,9 @@ namespace BarCalculator
 
             Console.WriteLine("Введите имя файла (например, data.json):");
             string usrflname = Console.ReadLine();
-            User user = new User(usrname, dat, usrdat, usrflname);
+
             List<BarInfo> bars = new List<BarInfo>();
+            Dictionary<string, decimal> participantBalances = new Dictionary<string, decimal>();
 
             while (true)
             {
@@ -33,21 +34,56 @@ namespace BarCalculator
                 Console.WriteLine("Введите участников через запятую:");
                 string[] participants = Console.ReadLine().Split(',');
 
+                // Убедимся, что каждый участник есть в словаре балансов
+                foreach (var participant in participants)
+                {
+                    if (!participantBalances.ContainsKey(participant.Trim()))
+                    {
+                        participantBalances[participant.Trim()] = 0;
+                    }
+                }
+
                 Console.WriteLine("Введите общий счет:");
                 decimal totalBill = decimal.Parse(Console.ReadLine());
 
                 Console.WriteLine("Кто платил за всех?");
-                string payer = Console.ReadLine();
+                string payer = Console.ReadLine().Trim();
 
                 Dictionary<string, decimal> expenses = new Dictionary<string, decimal>();
+                decimal totalExpenses = 0; // Общие расходы всех участников
 
+                // Вводим, сколько потратил каждый участник
                 foreach (var participant in participants)
                 {
                     Console.WriteLine($"Сколько потратил {participant.Trim()}?");
                     decimal amount = decimal.Parse(Console.ReadLine());
                     expenses[participant.Trim()] = amount;
+                    totalExpenses += amount;
                 }
 
+                // Если общая сумма расходов участников не равна общему счету, выводим предупреждение
+                if (totalExpenses != totalBill)
+                {
+                    Console.WriteLine("Внимание: Сумма расходов участников не совпадает с общим счетом!");
+                }
+
+                // Расчет баланса
+                foreach (var participant in participants)
+                {
+                    string trimmedParticipant = participant.Trim();
+                    if (trimmedParticipant == payer)
+                    {
+                        // У плательщика баланс уменьшается на сумму общего счета
+                        participantBalances[payer] -= totalBill;
+                    }
+                    else
+                    {
+                        // Остальные участники "возвращают" свои расходы плательщику
+                        participantBalances[payer] += expenses[trimmedParticipant];
+                    }
+                }
+
+                // Сохраняем информацию о баре
                 BarInfo bar = new BarInfo
                 {
                     BarName = barName,
@@ -61,65 +97,45 @@ namespace BarCalculator
 
                 Console.WriteLine("Бар успешно добавлен!");
             }
-            Console.WriteLine("Сохранение результатов....");
+
+            // Сохранение в JSON
             string filePath = Path.Combine(usrdat, usrflname);
             SaveToJson(bars, filePath);
-            static void SaveToJson(List<BarInfo> bars, string filePath)
+
+            // Вывод общей информации
+            Console.
+WriteLine($"\nПользователь: {usrname}");
+            Console.WriteLine($"Дата: {dat}");
+            Console.WriteLine($"Файл сохранен по пути: {filePath}");
+
+            // Вывод итогового баланса
+            Console.WriteLine("\nИтоговый баланс участников:");
+            foreach (var balance in participantBalances)
             {
-                try
-                {
-                    string jsonData = JsonSerializer.Serialize(bars);
-                    File.WriteAllText(filePath, jsonData);
-                    Console.WriteLine("Данные успешно сохранены в файл JSON!");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Ошибка при записи файла: {ex.Message}");
-                }
+                if (balance.Value > 0)
+                    Console.WriteLine($"{balance.Key} должен {Math.Abs(balance.Value):0.00}");
+                else if (balance.Value == 0)
+                    Console.WriteLine($"{balance.Key} должен вернуть {balance.Value}:0.00");
+                else
+                    Console.WriteLine($"{balance.Key} ему/ей должны.");
             }
         }
-    }
 
-    public class User
-    {
-        public string Username { get; }
-        public string Data { get; }
-        public string UserDataPath { get; }
-        public string UserFilename { get; }
-        public string UserBarName { get; }
-        public User(string username, string data, string userDataPath, string userFilename)
+        static void SaveToJson(List<BarInfo> bars, string filePath)
         {
-            Username = username;
-            Data = data;
-            UserDataPath = userDataPath;
-            UserFilename = userFilename;
-
-            // Формируем полный путь к файлу
-            string fullFilePath = Path.Combine(UserDataPath, UserFilename);
-
             try
             {
-                FileInfo fileInfo = new FileInfo(fullFilePath);
-                
-                // Проверяем, существует ли файл
-                if (fileInfo.Exists)
-                {
-                    Console.WriteLine("Файл уже существует. Пересоздаю его...");
-                    fileInfo.Delete(); // Удаляем старый файл
-                }
-
-                // Создаем новый файл
-                using (FileStream fs = File.Create(fullFilePath))
-                {
-                    Console.WriteLine($"Файл успешно создан по пути: {fullFilePath}");
-                }
+                string jsonData = JsonSerializer.Serialize(bars, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(filePath, jsonData);
+                Console.WriteLine("Данные успешно сохранены в файл JSON!");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка при создании файла: {ex.Message}");
+                Console.WriteLine($"Ошибка при записи файла: {ex.Message}");
             }
         }
     }
+
     public class BarInfo
     {
         public string BarName { get; set; }

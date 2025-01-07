@@ -1,0 +1,19 @@
+[
+  {
+    "BarName": "ABOBA",
+    "Participants": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "TotalBill": 4000,
+    "Payer": "A",
+    "Expenses": {
+      "A": 1000,
+      "B": 1000,
+      "C": 1000,
+      "D": 1000
+    }
+  }
+]
