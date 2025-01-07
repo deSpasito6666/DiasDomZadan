@@ -34,7 +34,6 @@ namespace BarCalculator
                 Console.WriteLine("Введите участников через запятую:");
                 string[] participants = Console.ReadLine().Split(',');
 
-                // Убедимся, что каждый участник есть в словаре балансов
                 foreach (var participant in participants)
                 {
                     if (!participantBalances.ContainsKey(participant.Trim()))
@@ -50,9 +49,9 @@ namespace BarCalculator
                 string payer = Console.ReadLine().Trim();
 
                 Dictionary<string, decimal> expenses = new Dictionary<string, decimal>();
-                decimal totalExpenses = 0; // Общие расходы всех участников
+                decimal totalExpenses = 0;
 
-                // Вводим, сколько потратил каждый участник
+
                 foreach (var participant in participants)
                 {
                     Console.WriteLine($"Сколько потратил {participant.Trim()}?");
@@ -61,29 +60,24 @@ namespace BarCalculator
                     totalExpenses += amount;
                 }
 
-                // Если общая сумма расходов участников не равна общему счету, выводим предупреждение
                 if (totalExpenses != totalBill)
                 {
                     Console.WriteLine("Внимание: Сумма расходов участников не совпадает с общим счетом!");
                 }
 
-                // Расчет баланса
                 foreach (var participant in participants)
                 {
                     string trimmedParticipant = participant.Trim();
                     if (trimmedParticipant == payer)
                     {
-                        // У плательщика баланс уменьшается на сумму общего счета
                         participantBalances[payer] -= totalBill;
                     }
                     else
                     {
-                        // Остальные участники "возвращают" свои расходы плательщику
                         participantBalances[payer] += expenses[trimmedParticipant];
                     }
                 }
 
-                // Сохраняем информацию о баре
                 BarInfo bar = new BarInfo
                 {
                     BarName = barName,
@@ -98,17 +92,15 @@ namespace BarCalculator
                 Console.WriteLine("Бар успешно добавлен!");
             }
 
-            // Сохранение в JSON
+
             string filePath = Path.Combine(usrdat, usrflname);
             SaveToJson(bars, filePath);
 
-            // Вывод общей информации
             Console.
 WriteLine($"\nПользователь: {usrname}");
             Console.WriteLine($"Дата: {dat}");
             Console.WriteLine($"Файл сохранен по пути: {filePath}");
 
-            // Вывод итогового баланса
             Console.WriteLine("\nИтоговый баланс участников:");
             foreach (var balance in participantBalances)
             {
